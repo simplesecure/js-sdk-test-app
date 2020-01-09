@@ -7,17 +7,16 @@ const Web3 = require('web3');
 const simple = new SimpleID({
   appOrigin: "http://localhost:3001",
   appName: "Test App",
-  scopes: ['email'],
-  apiKey: "123456",
-  devId: "justin.email.email@email.com",
-  development: true, 
+  appId: "22080e0f-bc57-40b9-85ff-a8b51b3ee61c", 
   network: 'ropsten', 
   localRPCServer: 'http://localhost:7545'
 });
 const web3 = new Web3(simple.getProvider());
 const address = "0xe9F3fe303dAe6223696cE3CE1573D7168100E8E8";
 const BLOCKSTACK_FILE_NAME = "SimpleID";
-let code;
+const TEST_EMAIL = "bobby_swivelhips@email.com";
+const TEST_ADDRESS = "0x3d4ACDBF5DC1Ad507D7C879B4355b5c7c3BB542C";
+const WALLET_PROVIDER = "NOT SIMPLEID";
 let email;
 let valueToSet;
 let contract;
@@ -48,6 +47,15 @@ class App extends React.Component {
     // const account = await simple.authenticate(payload);
     // console.log(account);
   }
+
+  signInWithoutSID = () => {
+    const userInfo = {
+      email: TEST_EMAIL, 
+      address: TEST_ADDRESS, 
+      provider: WALLET_PROVIDER
+    }
+    simple.passUserInfo(userInfo);
+  }
   
   createContractTx = async () => {
     const data = simple.getUserData();
@@ -65,7 +73,8 @@ class App extends React.Component {
   
   fetchContract = async () => {
     contract = new web3.eth.Contract(abi, address);
-    const taskCount = await contract.methods.userCount();
+    console.log(contract);
+    //const taskCount = await contract.methods.userCount();
     // contract = await simple.fetchContract(abi, address);
     // const taskCount = await contract.taskCount();
     // console.log(taskCount.toNumber());
@@ -211,9 +220,9 @@ class App extends React.Component {
     console.log(fetchedContent);
   }
   
-  handleCode = (e) => {
-    code = e.target.value;
-  }
+  // handleCode = (e) => {
+  //   code = e.target.value;
+  // }
   
   handleValue = (e) => {
     valueToSet = e.target.value;
@@ -229,6 +238,23 @@ class App extends React.Component {
 
   signTx = async () => {
     try {
+      const signed = await web3.eth.signTransaction({
+        from: simple.getUserData().wallet.ethAddr,
+        gasPrice: "20000000000",
+        gas: "21000",
+        to: '0x3ba190E767c1C1bfa7b0e3181829bBCBe82cfcD7',
+        value: "0000005",
+        data: "0x"
+      })
+      console.log("HERE's THE SIGNED TX: ", signed);
+    } catch(e) {
+      console.log("IN APP ERROR: ", e);
+    }
+    // console.log("SIGNED IN APP ", signed);
+  }
+
+  sendTx = async () => {
+    try {
       web3.eth.sendTransaction({
         from: simple.getUserData().wallet.ethAddr,
         gasPrice: "20000000000",
@@ -238,7 +264,7 @@ class App extends React.Component {
         data: "0x"
       })
       .on('transactionHash', (hash) => {
-        console.log(hash)
+        console.log("HERE's THE HASH: ", hash)
       })
     } catch(e) {
       console.log("IN APP ERROR: ", e);
@@ -268,8 +294,6 @@ class App extends React.Component {
   }
 
   render() {
-    console.log(simple.getProvider());
-    console.log(simple.getUserData());
     let loggedIn = false;
     if(simple.getUserData()) {
       loggedIn = true;
@@ -284,26 +308,17 @@ class App extends React.Component {
           </div> : 
           <h1>Log in to continue</h1>
         }
-        <button onClick={this.auth}>Auth Token</button>
-        <button onClick={this.signIn}>Login With Token</button>
-        <button onClick={this.pinToIPFS}>Store IPFS</button>
-        <button onClick={this.fetchFromIPFS}>Fetch IPFS</button>
-        <button onClick={this.postToBlockstack}>Store Blockstack</button>
-        <button onClick={this.fetchFromBlockstack}>Fetch Blockstack</button>
-        <button onClick={this.fetchContract}>Fetch Eth Contract</button>
-        <button onClick={this.createContractTx}>Create Contract</button>
-        <button onClick={this.deployContract}>Deploy Contract</button>
-        <button onClick={this.setValue}>Update Contract</button>
+        <button onClick={this.signIn}>Login</button><br/>
+        <button onClick={this.signInWithoutSID}>Login No SID Wallet</button><br/>
+        <button onClick={this.fetchContract}>Fetch Eth Contract</button><br/>
+        <button onClick={this.deployContract}>Deploy Contract</button><br/>
+        <button onClick={this.setValue}>Update Contract</button><br/>
         <button onClick={this.signTx}>Sign Transaction</button> <br/>
+        <button onClick={this.sendTx}>Send Transaction</button> <br/>
         <button onClick={this.signMessage}>Sign Message</button> <br/>
         <button onClick={this.estGas}>Estimate Gas</button> <br/>
-        <button onClick={this.approveTransaction}>Approve Transaction</button> <br/>
         <button onClick={this.openBox}>3Box</button> <br/>
         <button onClick={this.signOut}>Sign Out</button> <br/>
-        <input type="email" placeholder="email" onChange={this.handleEmail} /> <br/>
-        <input type="text" id="token" placeholder="token" onChange={this.handleCode} /> <br/>
-        <input type="text" placeholder="Set contract value" onChange={this.handleValue} /><br/>
-        <input type="text" placeholder="Type some content" onChange={this.handleContent} />
       </div>
     );
   }
