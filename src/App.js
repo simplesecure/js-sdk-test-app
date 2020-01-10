@@ -7,8 +7,8 @@ const Web3 = require('web3');
 const simple = new SimpleID({
   appOrigin: "http://localhost:3001",
   appName: "Test App",
-  appId: "22080e0f-bc57-40b9-85ff-a8b51b3ee61c", 
-  network: 'ropsten', 
+  appId: "22080e0f-bc57-40b9-85ff-a8b51b3ee61c",
+  network: 'ropsten',
   localRPCServer: 'http://localhost:7545'
 });
 const web3 = new Web3(simple.getProvider());
@@ -39,7 +39,7 @@ class App extends React.Component {
     const account = await simple.authenticate(payload);
     console.log(account);
   }
-  
+
   signIn = async () => {
     simple.signUserIn();
     // console.log(code);
@@ -50,27 +50,27 @@ class App extends React.Component {
 
   signInWithoutSID = () => {
     const userInfo = {
-      email: TEST_EMAIL, 
-      address: TEST_ADDRESS, 
+      email: TEST_EMAIL,
+      address: TEST_ADDRESS,
       provider: WALLET_PROVIDER
     }
     simple.passUserInfo(userInfo);
   }
-  
+
   createContractTx = async () => {
     const data = simple.getUserData();
     const account = data.wallet.ethAddr;
     const payload = {
-      email: data.email, 
-      fromEmail: "hello@simpleid.xyz", 
-      bytecode, 
-      abi, 
+      email: data.email,
+      fromEmail: "hello@simpleid.xyz",
+      bytecode,
+      abi,
       account
     }
     const contract = await simple.createContract(payload);
     console.log(contract);
   }
-  
+
   fetchContract = async () => {
     contract = new web3.eth.Contract(abi, address);
     console.log(contract);
@@ -91,7 +91,7 @@ class App extends React.Component {
     //   taskArr.push(taskObj);
     // }
   }
-  
+
   deployContract = async () => {
     const contract = new web3.eth.Contract(abi, {
       from: simple.getUserData().wallet.ethAddr, gas: 1000000, data: bytecode
@@ -103,7 +103,7 @@ class App extends React.Component {
       gas: 1500000,
       gasPrice: '20000000000'
     })
-    .on('error', function(error){ 
+    .on('error', function(error){
       console.log("ERROR: ", error)
     })
     .on('transactionHash', function(transactionHash){
@@ -119,7 +119,7 @@ class App extends React.Component {
         console.log(newContractInstance.options.address) // instance with the new contract address
     });
     // const params = {
-    //   email: simple.getUserData().email, 
+    //   email: simple.getUserData().email,
     //   code
     // }
     // const contract = await simple.deployContract(params);
@@ -130,7 +130,7 @@ class App extends React.Component {
     //   console.log("ERROR: ", contract);
     // }
   }
-  
+
   pollForStatus = async (tx) => {
     const status = await simple.pollForStatus(tx);
     console.log(status);
@@ -140,28 +140,28 @@ class App extends React.Component {
       this.fetchContract();
     }
   }
-  
+
   // async function sendTokens() {
   //   //This will be a thing eventually
   // }
-  
+
   setValue = async () => {
     const data = simple.getUserData();
     const account = data.wallet.ethAddr;
     await this.fetchContract();
     const params = {
-      method: "createTask", 
-      value: valueToSet, 
-      abi, 
-      email: data.email, 
-      fromEmail: "hello@simpleid.xyz", 
-      account, 
+      method: "createTask",
+      value: valueToSet,
+      abi,
+      email: data.email,
+      fromEmail: "hello@simpleid.xyz",
+      account,
       address
     }
     const approval = await simple.createContractTransaction(params);
     console.log(approval);
   }
-  
+
   approveTransaction = async () => {
     const approval = await web3.eth.approveTransaction({
       from: "0x709eDA1E2cc771C5D17a86422C121785eD7c2Cc0",
@@ -173,8 +173,8 @@ class App extends React.Component {
     });
     console.log(approval);
     // const params = {
-    //   email: simple.getUserData().email, 
-    //   contractTx: true, 
+    //   email: simple.getUserData().email,
+    //   contractTx: true,
     //   code
     // }
     // const transaction = await simple.broadcastTransaction(params);
@@ -185,53 +185,53 @@ class App extends React.Component {
     //   console.log("ERROR: ", transaction);
     // }
   }
-  
+
   postToBlockstack = async () => {
     const userSession = simple.getBlockstackSession();
     const data = await userSession.putFile(BLOCKSTACK_FILE_NAME, JSON.stringify(content));
     console.log(data);
   }
-  
+
  fetchFromBlockstack = async () => {
     const userSession = simple.getBlockstackSession();
     const data = await userSession.getFile(BLOCKSTACK_FILE_NAME);
     console.log(data);
   }
-  
+
   pinToIPFS = async () => {
     const params = {
-      email: simple.getUserData().email, 
-      id: "testing", 
+      email: simple.getUserData().email,
+      id: "testing",
       content: {
-        title: "SimpleID Test", 
+        title: "SimpleID Test",
         content
       }
     }
     const pinned = await simple.pinContent(params);
     console.log(pinned);
   }
-  
+
   fetchFromIPFS = async () => {
     const params = {
-      email: simple.getUserData().email, 
+      email: simple.getUserData().email,
       id: "testing"
     }
     const fetchedContent = await simple.fetchPinnedContent(params);
     console.log(fetchedContent);
   }
-  
+
   // handleCode = (e) => {
   //   code = e.target.value;
   // }
-  
+
   handleValue = (e) => {
     valueToSet = e.target.value;
   }
-  
+
   handleEmail = (e) => {
     email = e.target.value;
   }
-  
+
   handleContent = (e) => {
     content = e.target.value;
   }
@@ -305,7 +305,7 @@ class App extends React.Component {
           <div>
             <h1>Welcome back!</h1>
             <p>Here's your wallet address: {simple.getUserData().wallet.ethAddr}</p>
-          </div> : 
+          </div> :
           <h1>Log in to continue</h1>
         }
         <button onClick={this.signIn}>Login</button><br/>
@@ -322,7 +322,7 @@ class App extends React.Component {
       </div>
     );
   }
-  
+
 }
 
 export default App;
