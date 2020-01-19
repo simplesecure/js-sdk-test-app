@@ -5,17 +5,19 @@ import { abi, bytecode } from './contractDeets';
 const Box = require('3box')
 const Web3 = require('web3');
 const simple = new SimpleID({
-  appOrigin: "http://localhost:3001",
+  appOrigin: window.location.origin,
+  useSimpledIdWidget: true,
   appName: "Test App",
-  appId: "22080e0f-bc57-40b9-85ff-a8b51b3ee61c",
+  appId: "7c018350-4017-42ac-b55a-ebbe999c1ca7",
   network: 'ropsten',
   localRPCServer: 'http://localhost:7545'
 });
-const web3 = new Web3(simple.getProvider());
-const address = "0xe9F3fe303dAe6223696cE3CE1573D7168100E8E8";
+//const web3 = new Web3(simple.getProvider());
+const web3 = window.web3 ? window.web3 = new Web3(window.web3.currentProvider) : new Web3(Web3.givenProvider);
+const address = "0xcf88FA6eE6D111b04bE9b06ef6fAD6bD6691B88c";
 const BLOCKSTACK_FILE_NAME = "SimpleID";
-const TEST_EMAIL = "bobby_swivelhips@email.com";
-const TEST_ADDRESS = "0x3d4ACDBF5DC1Ad507D7C879B4355b5c7c3BB542C";
+const TEST_EMAIL = "justin.edward.hunter+2@gmail.com";
+const TEST_ADDRESS = "0xD5DD03773883c6f12091994482104fDd27F14118";
 const WALLET_PROVIDER = "NOT SIMPLEID";
 let email;
 let valueToSet;
@@ -25,7 +27,7 @@ let content;
 class App extends React.Component {
   async componentDidMount() {
     const accounts = await web3.eth.getAccounts();
-    console.log(accounts);
+    console.log("ACCOUNTS", accounts)
   }
 
   openBox = async () => {
@@ -48,13 +50,25 @@ class App extends React.Component {
     // console.log(account);
   }
 
-  signInWithoutSID = () => {
-    const userInfo = {
-      email: TEST_EMAIL,
-      address: TEST_ADDRESS,
-      provider: WALLET_PROVIDER
+  signInWithoutSID = async () => {
+    const accounts = await web3.eth.getAccounts();
+    // const userInfo = {
+    //   email: TEST_EMAIL,
+    //   address: TEST_ADDRESS,
+    //   provider: WALLET_PROVIDER
+    // }
+    // simple.passUserInfo(userInfo);
+    if(accounts.length > 0) {
+      console.log(web3.currentProvider.isMetaMask)
+      const userInfo = {
+        //email: TEST_EMAIL,
+        address: accounts[0],
+        provider: web3.currentProvider.isMetaMask ? "MetaMask" : "Unknown"
+      }
+      simple.passUserInfo(userInfo);
+    } else {
+      console.log("CONNECT PROVIDER")
     }
-    simple.passUserInfo(userInfo);
   }
 
   createContractTx = async () => {
@@ -168,7 +182,7 @@ class App extends React.Component {
       gasPrice: "20000000000",
       gas: "21000",
       to: '0x3535353535353535353535353535353535353535',
-      value: "1000000000000000000",
+      value: "00000000005",
       data: "0x"
     });
     console.log(approval);
@@ -242,8 +256,8 @@ class App extends React.Component {
         from: simple.getUserData().wallet.ethAddr,
         gasPrice: "20000000000",
         gas: "21000",
-        to: '0x3ba190E767c1C1bfa7b0e3181829bBCBe82cfcD7',
-        value: "0000005",
+        to: '0xb41C60Db5590331a56162D30DA905b498DcA9130',
+        value: "00000000005",
         data: "0x"
       })
       console.log("HERE's THE SIGNED TX: ", signed);
@@ -259,8 +273,8 @@ class App extends React.Component {
         from: simple.getUserData().wallet.ethAddr,
         gasPrice: "20000000000",
         gas: "21000",
-        to: '0x3ba190E767c1C1bfa7b0e3181829bBCBe82cfcD7',
-        value: "0000005",
+        to: '0xb41C60Db5590331a56162D30DA905b498DcA9130',
+        value: "00000000005",
         data: "0x"
       })
       .on('transactionHash', (hash) => {
@@ -294,6 +308,7 @@ class App extends React.Component {
   }
 
   render() {
+    console.log("ACTIVE: ",simple.activeNotifications)
     let loggedIn = false;
     if(simple.getUserData()) {
       loggedIn = true;
@@ -318,6 +333,7 @@ class App extends React.Component {
         <button onClick={this.signMessage}>Sign Message</button> <br/>
         <button onClick={this.estGas}>Estimate Gas</button> <br/>
         <button onClick={this.openBox}>3Box</button> <br/>
+        <button onClick={() => simple.launchWallet()}>Open Wallet</button> <br/>
         <button onClick={this.signOut}>Sign Out</button> <br/>
       </div>
     );
