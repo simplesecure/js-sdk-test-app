@@ -8,12 +8,13 @@ const simple = new SimpleID({
   appOrigin: window.location.origin,
   useSimpledIdWidget: true,
   appName: "Test App",
-  appId: "7c018350-4017-42ac-b55a-ebbe999c1ca7",
+  appId: "ac50b230-9d15-45eb-bd51-7e80cfd521ff",
   network: 'ropsten',
-  localRPCServer: 'http://localhost:7545'
+  localRPCServer: 'http://localhost:7545',
+  devWidget: true
 });
-//const web3 = new Web3(simple.getProvider());
-const web3 = window.web3 ? window.web3 = new Web3(window.web3.currentProvider) : new Web3(Web3.givenProvider);
+const web3 = new Web3(simple.getProvider());
+// const web3 = window.web3 ? window.web3 = new Web3(window.web3.currentProvider) : new Web3(Web3.givenProvider);
 const address = "0xcf88FA6eE6D111b04bE9b06ef6fAD6bD6691B88c";
 const BLOCKSTACK_FILE_NAME = "SimpleID";
 const TEST_EMAIL = "justin.edward.hunter+2@gmail.com";
@@ -52,19 +53,19 @@ class App extends React.Component {
 
   signInWithoutSID = async () => {
     const accounts = await web3.eth.getAccounts();
-    // const userInfo = {
-    //   email: TEST_EMAIL,
-    //   address: TEST_ADDRESS,
-    //   provider: WALLET_PROVIDER
-    // }
+    const userInfo = {
+      email: TEST_EMAIL,
+      address: TEST_ADDRESS,
+      provider: WALLET_PROVIDER
+    }
     // simple.passUserInfo(userInfo);
     if(accounts.length > 0) {
       console.log(web3.currentProvider.isMetaMask)
-      const userInfo = {
-        //email: TEST_EMAIL,
-        address: accounts[0],
-        provider: web3.currentProvider.isMetaMask ? "MetaMask" : "Unknown"
-      }
+      // const userInfo = {
+      //   //email: TEST_EMAIL,
+      //   address: accounts[0],
+      //   provider: web3.currentProvider.isMetaMask ? "MetaMask" : "Unknown"
+      // }
       simple.passUserInfo(userInfo);
     } else {
       console.log("CONNECT PROVIDER")
