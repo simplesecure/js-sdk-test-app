@@ -8,8 +8,9 @@ const simple = new SimpleID({
   appOrigin: window.location.origin,
   useSimpledIdWidget: true,
   appName: "Test App",
-  appId: "7c018350-4017-42ac-b55a-ebbe999c1ca7",
+  appId: "820bf1fe-a873-4d1b-8fa1-20145f1cc9fb",
   network: 'ropsten',
+  devWidget: true,
   localRPCServer: 'http://localhost:7545'
 });
 //const web3 = new Web3(simple.getProvider());
