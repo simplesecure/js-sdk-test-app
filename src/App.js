@@ -4,16 +4,21 @@ import SimpleID from 'simpleid-js-sdk';
 import { abi, bytecode } from './contractDeets';
 const Box = require('3box')
 const Web3 = require('web3');
-const simple = new SimpleID({
-  appOrigin: window.location.origin,
-  useSimpledIdWidget: true,
-  appName: "Test App",
-  appId: "820bf1fe-a873-4d1b-8fa1-20145f1cc9fb",
-  network: 'ropsten',
-  devWidget: true,
-  localRPCServer: 'http://localhost:7545'
-});
-const web3 = new Web3(simple.getProvider());
+
+let simple = new SimpleID({
+      appOrigin: window.location.origin,
+      useSimpledIdWidget: true,
+      appName: "Test App",
+      // appId: "820bf1fe-a873-4d1b-8fa1-20145f1cc9fb",
+      appId: "58c834ab-9932-45a4-bcee-7e2de90ba561",    // AC's Test App
+      network: 'ropsten',
+      devWidget: true,
+      localRPCServer: 'http://localhost:7545' });
+
+simple._initWallet()
+const provider = simple.getProvider()
+const web3 = (provider) ? new Web3(simple.getProvider()) : undefined
+
 // const web3 = window.web3 ? window.web3 = new Web3(window.web3.currentProvider) : new Web3(Web3.givenProvider);
 const address = "0xcf88FA6eE6D111b04bE9b06ef6fAD6bD6691B88c";
 const BLOCKSTACK_FILE_NAME = "SimpleID";
@@ -26,9 +31,24 @@ let contract;
 let content;
 
 class App extends React.Component {
+  constructor() {
+    super()
+
+    this.loggedIn = false
+    this.walletAddr = ''
+  }
+
   async componentDidMount() {
-    const accounts = await web3.eth.getAccounts();
-    console.log("ACCOUNTS", accounts)
+    const ud = simple.getUserData()
+    if (ud) {
+      this.loggedIn = true
+      this.walletAddr = ud.wallet.ethAddr
+    }
+
+    if (web3) {
+      const accounts = await web3.eth.getAccounts();
+      console.log("ACCOUNTS", accounts)
+    }
   }
 
   openBox = async () => {
@@ -52,6 +72,8 @@ class App extends React.Component {
   }
 
   signInWithoutSID = async () => {
+    // return this.inlineIdleTestCase()
+
     const accounts = await web3.eth.getAccounts();
     const userInfo = {
       email: TEST_EMAIL,
@@ -69,6 +91,36 @@ class App extends React.Component {
       simple.passUserInfo(userInfo);
     } else {
       console.log("CONNECT PROVIDER")
+    }
+  }
+
+  // A quick test case to ensure we can handle many calls w/o throwing
+  // bad wallet address etc.
+  inlineIdleTestCase = async () => {
+    const SAME_DATA_TEST = false
+    const ITERATIONS = 5
+    const PERMUTATION_START = 22
+
+    if (SAME_DATA_TEST) {
+      const permutation = PERMUTATION_START
+      const userInfo = {
+        email: `justin.edward.hunter+${permutation}@gmail.com`,
+        address: `0xD5DD03773883c6f12091994482104fDd27F141${permutation}`,
+        provider: "NOT SIMPLEID"
+      }
+      for (let iteration = 0; iteration < ITERATIONS; iteration++) {
+        simple.passUserInfo(userInfo)
+      }
+    } else {
+      for (let iteration = 0; iteration < ITERATIONS; iteration++) {
+        let permutation = PERMUTATION_START + iteration
+        const userInfo = {
+          email: `justin.edward.hunter+${permutation}@gmail.com`,
+          address: `0xD5DD03773883c6f12091994482104fDd27F141${permutation}`,
+          provider: "NOT SIMPLEID"
+        }
+        simple.passUserInfo(userInfo)
+      }
     }
   }
 
@@ -308,19 +360,20 @@ class App extends React.Component {
     this.setState({ updated: true });
   }
 
+  launchWallet = () => {
+    simple.launchWallet()
+  }
+
   render() {
-    console.log("ACTIVE: ",simple.activeNotifications)
-    let loggedIn = false;
-    if(simple.getUserData()) {
-      loggedIn = true;
-    }
+    // console.log("ACTIVE: ",simple.activeNotifications)
+
     return (
       <div className="App">
         {
-          loggedIn ?
+          this.loggedIn ?
           <div>
             <h1>Welcome back!</h1>
-            <p>Here's your wallet address: {simple.getUserData().wallet.ethAddr}</p>
+            <p>Here's your wallet address: {this.walletAddr}</p>
           </div> :
           <h1>Log in to continue</h1>
         }
@@ -334,7 +387,7 @@ class App extends React.Component {
         <button onClick={this.signMessage}>Sign Message</button> <br/>
         <button onClick={this.estGas}>Estimate Gas</button> <br/>
         <button onClick={this.openBox}>3Box</button> <br/>
-        <button onClick={() => simple.launchWallet()}>Open Wallet</button> <br/>
+        <button onClick={this.launchWallet}>Open Wallet</button> <br/>
         <button onClick={this.signOut}>Sign Out</button> <br/>
       </div>
     );
