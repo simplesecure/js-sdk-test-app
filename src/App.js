@@ -2,22 +2,31 @@ import React from 'react';
 import './App.css';
 import SimpleID from 'simpleid-js-sdk';
 import { abi, bytecode } from './contractDeets';
-const Box = require('3box')
+import Web3Connect from "web3connect";
+import WalletConnectProvider from "@walletconnect/web3-provider";
+import Portis from "@portis/web3";
+import Fortmatic from "fortmatic";
+import Modal from 'react-bootstrap/Modal'
+import Button from 'react-bootstrap/Button'
+import InputGroup from 'react-bootstrap/InputGroup'
+import FormControl from 'react-bootstrap/FormControl'
+import Spinner from 'react-bootstrap/Spinner'
+//const Box = require('3box')
 const Web3 = require('web3');
 const simple = new SimpleID({
   appOrigin: window.location.origin,
   useSimpledIdWidget: true,
-  appName: "Test App",
-  appId: "820bf1fe-a873-4d1b-8fa1-20145f1cc9fb",
-  network: 'ropsten',
-  devWidget: true,
+  appName: "PBJ Project",
+  appId: "64b05085-4400-4f48-a271-de2377f9ce49",
+  network: 'mainnet',
+  devWidget: false,
   localRPCServer: 'http://localhost:7545'
 });
-const web3 = new Web3(simple.getProvider());
-// const web3 = window.web3 ? window.web3 = new Web3(window.web3.currentProvider) : new Web3(Web3.givenProvider);
+let web3 = undefined //new Web3(simple.getProvider());
+//const web3 = window.web3 ? window.web3 = new Web3(window.web3.currentProvider) : new Web3(Web3.givenProvider);
 const address = "0xcf88FA6eE6D111b04bE9b06ef6fAD6bD6691B88c";
 const BLOCKSTACK_FILE_NAME = "SimpleID";
-const TEST_EMAIL = "justin.edward.hunter+2@gmail.com";
+const TEST_EMAIL = "justin.edward.hunter@gmail.com";
 const TEST_ADDRESS = "0xD5DD03773883c6f12091994482104fDd27F14118";
 const WALLET_PROVIDER = "NOT SIMPLEID";
 let email;
@@ -25,16 +34,77 @@ let valueToSet;
 let contract;
 let content;
 
+const providerOptions = {
+  walletconnect: {
+    package: WalletConnectProvider,
+    options: {
+      infuraId: 'b8c67a1f996e4d5493d5ba3ae3abfb03'
+    }
+  },
+  portis: {
+    package: Portis,
+    options: {
+      id: "80389521-9f08-4ded-bea3-09795dbb2201"
+    }
+  },
+  fortmatic: {
+    package: Fortmatic,
+    options: {
+      key: 'pk_test_AC1725A313402AC6'
+    }
+  },
+  // burnerconnect: {
+  //   package: BurnerConnectProvider,
+  //   options: {
+  //     defaultNetwork: '100',
+  //   },
+  // },
+  // arkane: {
+  //   package: Arkane,
+  //   options: {
+  //     clientId: process.env.REACT_APP_ARKANE_CLIENT_ID,
+  //     environment: "staging"
+  //   }
+  // },
+  // authereum: {
+  //   package: Authereum,
+  //   options: {}
+  // },
+  // squarelink: {
+  //   package: Squarelink,
+  //   options: {
+  //     id: process.env.REACT_APP_SQUARELINK_ID
+  //   }
+  // },
+  // torus: {
+  //   package: Torus
+  // }
+}
+
 class App extends React.Component {
+  constructor(props) {
+    super(props)
+    this.state = {
+      address: "", 
+      email: "", 
+      displayEmailPrompt: false, 
+      loading: false
+    }
+  }
   async componentDidMount() {
-    const accounts = await web3.eth.getAccounts();
-    console.log("ACCOUNTS", accounts)
+    const userData = simple.getUserData()
+    if(userData && userData.wallet) {
+      this.setState({ address: userData.wallet.ethAddr })
+    }
+    // const accounts = await web3.eth.getAccounts();
+    // console.log("ACCOUNTS", accounts)
+
   }
 
   openBox = async () => {
     const addr = simple.getUserData().wallet.ethAddr;
-    const box = await Box.openBox(addr, web3.currentProvider);
-    console.log(box);
+    // const box = await Box.openBox(addr, web3.currentProvider);
+    // console.log(box);
   }
 
   auth = async () => {
@@ -53,20 +123,49 @@ class App extends React.Component {
 
   signInWithoutSID = async () => {
     const accounts = await web3.eth.getAccounts();
-    const userInfo = {
-      email: TEST_EMAIL,
-      address: TEST_ADDRESS,
-      provider: WALLET_PROVIDER
-    }
-    // simple.passUserInfo(userInfo);
+    const { email } = this.state
+    console.log(accounts);
     if(accounts.length > 0) {
-      console.log(web3.currentProvider.isMetaMask)
-      // const userInfo = {
-      //   //email: TEST_EMAIL,
-      //   address: accounts[0],
-      //   provider: web3.currentProvider.isMetaMask ? "MetaMask" : "Unknown"
-      // }
-      simple.passUserInfo(userInfo);
+      //const handleMetamask = await web3.eth.sign('This app is trying to sign you in', accounts[0])
+      const msgParams = [
+        {
+          type: 'string',      // Any valid solidity type
+          name: 'Message',     // Any string label you want
+          value: 'This application is trying to sign you in using this address.'  // The value to sign
+       }
+      ] 
+      web3.currentProvider.sendAsync({
+        method: 'eth_signTypedData',
+        params: [msgParams, accounts[0]],
+        from: accounts[0],
+      }, async (err, result) => {
+        if (err) return console.error(err)
+        if (result.error) {
+          return console.error(result.error.message)
+        }
+        console.log("RESULT", result);
+        if(result.result) {
+          let userInfo = undefined
+          if(email) {
+            userInfo = {
+              email,
+              address: accounts[0],
+              provider: web3.currentProvider.isMetaMask ? "MetaMask" : "Unknown"
+            }
+            const signedIn = await simple.passUserInfo(userInfo);
+            console.log(signedIn)
+            //console.log(signedIn)
+            if(signedIn && signedIn[0].result && signedIn[0].result === 'success') {
+              //window.location.reload()
+              this.setState({ address: accounts[0] })
+            }
+          } else {
+            this.setState({ displayEmailPrompt: true })
+          }
+          
+        }
+      })
+
     } else {
       console.log("CONNECT PROVIDER")
     }
@@ -296,7 +395,7 @@ class App extends React.Component {
   }
 
   signMessage = async () => {
-    const signedMsg = await web3.eth.sign("Hello world", simple.getUserData().wallet.ethAddr);
+    const signedMsg = await web3.eth.signPersonal("Hello world", simple.getUserData().wallet.ethAddr);
     console.log("SIGNED", signedMsg);
   }
 
@@ -308,38 +407,135 @@ class App extends React.Component {
     this.setState({ updated: true });
   }
 
-  render() {
-    console.log("ACTIVE: ",simple.activeNotifications)
-    let loggedIn = false;
-    if(simple.getUserData()) {
-      loggedIn = true;
+  handleEmail = async (emailProvided) => {
+    const { email } = this.state
+    this.setState({ loading: true });
+    const accounts = await web3.eth.getAccounts();
+    let userInfo = undefined
+    debugger;
+    if(emailProvided && email) {
+      userInfo = {
+        email,
+        address: accounts[0],
+        provider: web3.currentProvider.isMetaMask ? "MetaMask" : "Unknown"
+      }
+      const signedIn = await simple.passUserInfo(userInfo);
+      console.log(signedIn)
+      //console.log(signedIn)
+      if(signedIn && signedIn[0].result && signedIn[0].result === 'success') {
+        //window.location.reload()
+        this.setState({ address: accounts[0], loading: false, displayEmailPrompt: false })
+      }
+    } else {
+      userInfo = {
+        address: accounts[0],
+        provider: web3.currentProvider.isMetaMask ? "MetaMask" : "Unknown"
+      }
+      const signedIn = await simple.passUserInfo(userInfo);
+      console.log(signedIn)
+      //console.log(signedIn)
+      if(signedIn && signedIn[0].result && signedIn[0].result === 'success') {
+        //window.location.reload()
+        this.setState({ address: accounts[0], loading: false, displayEmailPrompt: false })
+      }
     }
+  }
+
+  
+
+  render() {
+    const { address, displayEmailPrompt, email, loading } = this.state
     return (
       <div className="App">
+        <div className="text-center">
+          <h3>SimpleID Integration Testing</h3>
+          <div className="web3-button">
+            {
+              !address ? 
+              <Web3Connect.Button
+                network="ropsten" // optional
+                providerOptions={providerOptions}
+                onConnect={async (provider: any) => {
+                  web3 = await new Web3(provider); // add provider to web3
+                  console.log(web3.currentProvider)
+                  const accounts = await web3.eth.getAccounts()
+                  if(accounts && accounts.length > 0) {
+                    const msgParams = [
+                      {
+                        type: 'string',      // Any valid solidity type
+                        name: 'Message',     // Any string label you want
+                        value: 'This application is trying to sign you in using this address.'  // The value to sign
+                     }
+                    ] 
+                    web3.currentProvider.sendAsync({
+                      method: 'eth_signTypedData',
+                      params: [msgParams, accounts[0]],
+                      from: accounts[0],
+                    }, async (err, result) => {
+                      if (err) return console.error(err)
+                      if (result.error) {
+                        return console.error(result.error.message)
+                      } else {
+                        this.setState({ displayEmailPrompt: true, loading: false })
+                      }
+                    })
+                  } else {
+                    console.log("Web3 provider error")
+                  }
+                }}
+                onClose={() => {
+                  console.log("Web3Connect Modal Closed"); // modal has closed
+                }}
+            /> : 
+            <div>
+              <h5>Welcome back! Here's your wallet address:</h5>
+              <p>{address}</p>
+              <button onClick={() => simple.signOut()} className="sc-bxivhb idCQSl">Sign Out</button>
+            </div>
+            }
+          </div>
+        </div>
+
         {
-          loggedIn ?
-          <div>
-            <h1>Welcome back!</h1>
-            <p>Here's your wallet address: {simple.getUserData().wallet.ethAddr}</p>
-          </div> :
-          <h1>Log in to continue</h1>
+          displayEmailPrompt ? 
+          <Modal show={displayEmailPrompt} onHide={() => this.setState({ displayEmailPrompt: false})}>
+            <Modal.Header closeButton>
+              <Modal.Title>Provide Email?</Modal.Title>
+            </Modal.Header>
+
+            <Modal.Body>
+              {
+                !loading ? 
+                <div>
+                  <p>If you'd like to be able to receive important updates, please provide your email. We do not ever store your email. Instead, we use SimpleID to protect your information and disassociate your email from your wallet address. <a href="https://simpleid.xyz">Learn more here</a>.</p>
+                  <InputGroup className="mb-3">
+                    <InputGroup.Prepend>
+                      <InputGroup.Text id="basic-addon1">Email</InputGroup.Text>
+                    </InputGroup.Prepend>
+                    <FormControl
+                      value={email}
+                      onChange={(e) => this.setState({ email: e.target.value })}
+                      placeholder="Enter an email address"
+                      aria-label="Email"
+                      aria-describedby="basic-addon1"
+                    />
+                  </InputGroup>
+                </div> : 
+                <Spinner animation="grow" />
+              }
+
+            </Modal.Body>
+
+            <Modal.Footer>
+              <Button onClick={() => this.handleEmail(true)} variant="primary">Submit</Button>
+              <Button onClick={() => this.handleEmail(false)} variant="secondary">No, thanks</Button>
+            </Modal.Footer>
+          </Modal>
+           : <div />
         }
-        <button onClick={this.signIn}>Login</button><br/>
-        <button onClick={this.signInWithoutSID}>Login No SID Wallet</button><br/>
-        <button onClick={this.fetchContract}>Fetch Eth Contract</button><br/>
-        <button onClick={this.deployContract}>Deploy Contract</button><br/>
-        <button onClick={this.setValue}>Update Contract</button><br/>
-        <button onClick={this.signTx}>Sign Transaction</button> <br/>
-        <button onClick={this.sendTx}>Send Transaction</button> <br/>
-        <button onClick={this.signMessage}>Sign Message</button> <br/>
-        <button onClick={this.estGas}>Estimate Gas</button> <br/>
-        <button onClick={this.openBox}>3Box</button> <br/>
-        <button onClick={() => simple.launchWallet()}>Open Wallet</button> <br/>
-        <button onClick={this.signOut}>Sign Out</button> <br/>
       </div>
     );
   }
-
 }
 
 export default App;
