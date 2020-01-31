@@ -82,8 +82,8 @@ const providerOptions = {
 }
 
 class App extends React.Component {
-  constructor(props) {
-    super(props)
+  constructor() {
+    super()
     this.state = {
       address: "", 
       email: "", 
@@ -122,6 +122,8 @@ class App extends React.Component {
   }
 
   signInWithoutSID = async () => {
+    // return this.inlineIdleTestCase()
+
     const accounts = await web3.eth.getAccounts();
     const { email } = this.state
     console.log(accounts);
@@ -168,6 +170,36 @@ class App extends React.Component {
 
     } else {
       console.log("CONNECT PROVIDER")
+    }
+  }
+
+  // A quick test case to ensure we can handle many calls w/o throwing
+  // bad wallet address etc.
+  inlineIdleTestCase = async () => {
+    const SAME_DATA_TEST = false
+    const ITERATIONS = 5
+    const PERMUTATION_START = 22
+
+    if (SAME_DATA_TEST) {
+      const permutation = PERMUTATION_START
+      const userInfo = {
+        email: `justin.edward.hunter+${permutation}@gmail.com`,
+        address: `0xD5DD03773883c6f12091994482104fDd27F141${permutation}`,
+        provider: "NOT SIMPLEID"
+      }
+      for (let iteration = 0; iteration < ITERATIONS; iteration++) {
+        simple.passUserInfo(userInfo)
+      }
+    } else {
+      for (let iteration = 0; iteration < ITERATIONS; iteration++) {
+        let permutation = PERMUTATION_START + iteration
+        const userInfo = {
+          email: `justin.edward.hunter+${permutation}@gmail.com`,
+          address: `0xD5DD03773883c6f12091994482104fDd27F141${permutation}`,
+          provider: "NOT SIMPLEID"
+        }
+        simple.passUserInfo(userInfo)
+      }
     }
   }
 
