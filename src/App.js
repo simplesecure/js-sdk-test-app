@@ -10,14 +10,15 @@ import Button from 'react-bootstrap/Button'
 import InputGroup from 'react-bootstrap/InputGroup'
 import FormControl from 'react-bootstrap/FormControl'
 import Spinner from 'react-bootstrap/Spinner'
-const Web3 = require('web3');
 const simple = new SimpleID({
   appOrigin: window.location.origin,
-  renderNotifications: false,
-  appId: "23eeec4d-ec62-4500-acad-6119a921c9a9",
+  appName: "Test App",
+  appId: "27aa8476-e31c-445d-9d1e-8918c3ab6a2d",
+  renderNotifications: true,
   network: 'mainnet'
 });
-let web3 = undefined 
+const Web3 = require('web3')
+let web3 = new Web3(Web3.givenProvider) 
 
 const providerOptions = {
   walletconnect: {
@@ -50,7 +51,8 @@ class App extends React.Component {
       loading: false, 
       showNotificationModal: false, 
       html: "", 
-      plainText: ""
+      plainText: "", 
+      radarNode: true
     }
   }
   async componentDidMount() {
@@ -59,6 +61,8 @@ class App extends React.Component {
       this.setState({ address: userData.wallet.ethAddr })
       if(!simple.renderNotifications) {
         this.handleNotificationFetch()
+      } else {
+        simple.notifications()
       }
     }
   }
@@ -66,7 +70,7 @@ class App extends React.Component {
   handleNotificationFetch = async () => {
     const notifications = await simple.notifications()
     console.log("NOTIFICATIONS: ", notifications)
-    if(notifications.length > 0) {
+    if(notifications && notifications.length > 0) {
       this.setState({ showNotificationModal: true, html: notifications[0].content, plainText: notifications[0].plain_text })
     }
   }
@@ -169,24 +173,25 @@ class App extends React.Component {
 
   closeNotifications = async () => {
     this.setState({ showNotificationModal: false })
-    await simple.dismissMessages()
+    // await simple.dismissMessages()
     this.handleNotificationFetch()
   }
 
   render() {
-    const { address, displayEmailPrompt, email, loading, showNotificationModal, plainText } = this.state
+    const { address, displayEmailPrompt, email, loading, showNotificationModal, plainText, radarNode } = this.state
 
     return (
       <div className="App">
         <div className="text-center">
           <h3>SimpleID Integration Testing</h3>
+
           <div className="web3-button">
             {
               !address ? 
               <Web3Connect.Button
                 network="ropsten" // optional
                 providerOptions={providerOptions}
-                onConnect={async (provider: any) => {
+                onConnect={async (provider) => {
                   web3 = await new Web3(provider); // add provider to web3
                   console.log(web3.currentProvider)
                   const accounts = await web3.eth.getAccounts()
