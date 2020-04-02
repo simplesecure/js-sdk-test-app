@@ -13,12 +13,13 @@ import Spinner from 'react-bootstrap/Spinner'
 const simple = new SimpleID({
   appOrigin: window.location.origin,
   appName: "Test App",
-  appId: "27aa8476-e31c-445d-9d1e-8918c3ab6a2d",
+  appId: "660928cd-3ca8-44a6-b375-6b38027fb93d",
+  chatAddress: "zdpuAu3rxU7suVYZCpBZSBE19Nfqmr71MLqbq3HVhAtSBtVqq",
   renderNotifications: true,
   network: 'mainnet'
 });
 const Web3 = require('web3')
-let web3 = new Web3(Web3.givenProvider) 
+let web3 = new Web3(Web3.givenProvider)
 
 const providerOptions = {
   walletconnect: {
@@ -45,19 +46,19 @@ class App extends React.Component {
   constructor() {
     super()
     this.state = {
-      address: "", 
-      email: "", 
-      displayEmailPrompt: false, 
-      loading: false, 
-      showNotificationModal: false, 
-      html: "", 
-      plainText: "", 
+      address: "",
+      email: "",
+      displayEmailPrompt: false,
+      loading: false,
+      showNotificationModal: false,
+      html: "",
+      plainText: "",
       radarNode: true
     }
   }
   async componentDidMount() {
     const userData = simple.getUserData()
-    if(userData && userData.wallet) {      
+    if(userData && userData.wallet) {
       this.setState({ address: userData.wallet.ethAddr })
       if(!simple.renderNotifications) {
         this.handleNotificationFetch()
@@ -89,7 +90,7 @@ class App extends React.Component {
           name: 'Message',     // Any string label you want
           value: 'This application is trying to sign you in using this address.'  // The value to sign
        }
-      ] 
+      ]
       web3.currentProvider.sendAsync({
         method: 'eth_signTypedData',
         params: [msgParams, accounts[0]],
@@ -118,7 +119,7 @@ class App extends React.Component {
           } else {
             this.setState({ displayEmailPrompt: true })
           }
-          
+
         }
       })
 
@@ -169,7 +170,7 @@ class App extends React.Component {
   createMarkup = () => {
     const { html } = this.state
     return {__html: html};
-  }  
+  }
 
   closeNotifications = async () => {
     this.setState({ showNotificationModal: false })
@@ -187,7 +188,7 @@ class App extends React.Component {
 
           <div className="web3-button">
             {
-              !address ? 
+              !address ?
               <Web3Connect.Button
                 network="ropsten" // optional
                 providerOptions={providerOptions}
@@ -202,7 +203,7 @@ class App extends React.Component {
                         name: 'Message',     // Any string label you want
                         value: 'This application is trying to sign you in using this address.'  // The value to sign
                      }
-                    ] 
+                    ]
                     web3.currentProvider.sendAsync({
                       method: 'eth_signTypedData',
                       params: [msgParams, accounts[0]],
@@ -222,7 +223,7 @@ class App extends React.Component {
                 onClose={() => {
                   console.log("Web3Connect Modal Closed"); // modal has closed
                 }}
-            /> : 
+            /> :
             <div>
               <h5>Welcome back! Here's your wallet address:</h5>
               <p>{address}</p>
@@ -233,7 +234,7 @@ class App extends React.Component {
         </div>
 
         {
-          displayEmailPrompt ? 
+          displayEmailPrompt ?
           <Modal show={displayEmailPrompt} onHide={() => this.setState({ displayEmailPrompt: false})}>
             <Modal.Header closeButton>
               <Modal.Title>Provide Email?</Modal.Title>
@@ -241,7 +242,7 @@ class App extends React.Component {
 
             <Modal.Body>
               {
-                !loading ? 
+                !loading ?
                 <div>
                   <p>If you'd like to be able to receive important updates, please provide your email. We do not ever store your email. Instead, we use SimpleID to protect your information and disassociate your email from your wallet address. <a href="https://simpleid.xyz">Learn more here</a>.</p>
                   <InputGroup className="mb-3">
@@ -256,7 +257,7 @@ class App extends React.Component {
                       aria-describedby="basic-addon1"
                     />
                   </InputGroup>
-                </div> : 
+                </div> :
                 <Spinner animation="grow" />
               }
 
